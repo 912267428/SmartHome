@@ -3,7 +3,7 @@
 
 #define DHT11_RCC RCC_APB2Periph_GPIOA 	//引脚RCC
 #define DHT11_PORT GPIOA 				//定义DHT11的端口
-#define DHT11_IO GPIO_Pin_15 			//定义DHT11的IO
+#define DHT11_IO GPIO_Pin_8 			//定义DHT11的IO
 
 
 void DHT11_IO_OUT (void);	//设置IO口为输出模式
