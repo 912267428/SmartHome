@@ -11,7 +11,8 @@
 #include "Bh1750.h"
 #include "key.h"
 
-u8 alarmFlag = 0; //是否报警的标志
+extern u8 alarmFlag = 0; //是否报警的标志
+extern u8 alarm_is_busy = 0; //报警是否被手动操作
 
 u8 humiH, humiL, tempH, tempL;
 float light;
@@ -64,7 +65,7 @@ int main(void)
 		
 		OLED_ShowNum(4,7,light,5);
 		
-		delay_ms(200);
+		//delay_ms(200);
 	}
  }
 

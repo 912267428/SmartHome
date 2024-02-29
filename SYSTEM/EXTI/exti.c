@@ -4,6 +4,7 @@
 #include "delay.h"
 #include "usart.h"
 
+ extern u8 alarmFlag;
  
 //外部中断初始化函数
 void EXTIX_Init(void)
@@ -66,7 +67,7 @@ void EXTI1_IRQHandler(void)
 {
   delay_ms(10);    //消抖			 
   if(KEY1==0)	{
-		LED0=!LED0;
+		alarmFlag = !alarmFlag;//报警标志取反
 	}
 	 EXTI_ClearITPendingBit(EXTI_Line1);  //清除LINE15线路挂起位
 }
