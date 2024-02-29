@@ -1,4 +1,5 @@
 #include "stm32f10x.h"                  // Device header
+#include "Buzzer.h"
 
 /**
   * @brief 初始化蜂鸣器对应的IO口
@@ -13,6 +14,8 @@ void Buzzer_Init(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
+	
+	Buzzer_OFF();
 }
 
 /**
