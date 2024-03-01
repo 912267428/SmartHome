@@ -11,8 +11,10 @@
 #include "Bh1750.h"
 #include "key.h"
 
+#include "esp8266.h"
+
 extern u8 alarmFlag = 0; //是否报警的标志
-extern u8 alarm_is_busy = 0; //报警是否被手动操作
+extern u8 alarm_is_free = 10; //报警是否被手动操作
 
 u8 humiH, humiL, tempH, tempL;
 float light;
@@ -20,7 +22,8 @@ float light;
 int main(void)
 {	
 	delay_init();	    //延时函数初始化
-	uart_init(115200);
+	Usart1_Init(115200);	//调试串口
+	Usart2_Init(115200);	//stm32 to esp8266通讯串口
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
 	
 	LED_Init();		  	//初始化与LED连接的硬件接口
@@ -28,7 +31,6 @@ int main(void)
 	KEY_Init();
 	EXTIX_Init();
 	
-	TIM2_Int_Init(4999, 7199);
 	OLED_Init();
 	DHT11_Init();
 	BH1750_Init();
@@ -39,8 +41,12 @@ int main(void)
 	OLED_ShowString(3,1,"temp:  .");
 	OLED_ShowString(4,1,"Light:      lx");
 	
+	TIM2_Int_Init(4999, 7199);
+	TIM3_Int_Init(2499, 7199);
+	printf("Hardware init OK\r\n");
 	
-	while(1)
+	
+	while(1) 
 	{	
 		//获取温湿度
 		DHT11_Read_Data(&humiH, &humiL, &tempH, &tempL);
@@ -51,13 +57,18 @@ int main(void)
 		}
 		
 		//判断是否报警
-		if(light > 3000 || humiH > 80 || tempH > 32)
-			alarmFlag = 1;
-		else
-			alarmFlag = 0;
-		
-		//串口与屏幕显示
-		printf("humi:%d.%d, temp:%d.%d\r\n", humiH, humiL, tempH, tempL);
+		if(alarm_is_free >= 10) //如果报警器空闲，则运行自动控制 初始值为10
+		{
+
+			if(light > 3000 || humiH > 80 || tempH > 32)
+				alarmFlag = 1;
+			else
+				alarmFlag = 0;
+		}
+		if(alarm_is_free < 10) alarm_is_free++;
+		printf("alarm_is_free:%d, alarmFlag:%d\r\n",alarm_is_free,alarmFlag);
+		UsartPrintf(USART_DEBUG, "alarm_is_free:%d, alarmFlag:%d\r\n",alarm_is_free,alarmFlag);
+		//屏幕显示
 		OLED_ShowNum(2,6,humiH,2);
 		OLED_ShowNum(2,9,humiL,2);
 		OLED_ShowNum(3,6,tempH,2);
@@ -65,7 +76,7 @@ int main(void)
 		
 		OLED_ShowNum(4,7,light,5);
 		
-		//delay_ms(200);
+		delay_ms(1000);
 	}
  }
 

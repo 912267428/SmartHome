@@ -2,6 +2,8 @@
 #include "led.h"
 #include "Buzzer.h"
  
+ extern u8 alarmFlag;
+ 
 void TIM2_Int_Init(u16 arr,u16 psc)
 {
     TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
@@ -78,8 +80,15 @@ void TIM3_IRQHandler(void)   //TIM3中断
 {
 	if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET) //检查指定的TIM中断发生与否:TIM 中断源 
 	{
-		TIM_ClearITPendingBit(TIM3, TIM_IT_Update  );  //清除TIMx的中断待处理位:TIM 中断源 
-		LED1=!LED1;
+		TIM_ClearITPendingBit(TIM3, TIM_IT_Update);  //清除TIMx的中断待处理位:TIM 中断源
+		
+		if(alarmFlag){//如果alarmFlag=1，执行报警
+			LED1=!LED1;
+			Buzzer_Turn();
+		}else{	//如果alarmFl=0，关闭指示灯和蜂鸣器
+			LED1=1;
+			Buzzer_OFF();
+		}
 	}
 }
 

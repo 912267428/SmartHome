@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_MD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\SYSTEM;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\LED;..\HARDWARE\OLED;..\HARDWARE\Buzzer;..\SYSTEM\EXTI;..\HARDWARE\DHT11;..\SYSTEM\TIMER;..\HARDWARE\BH1750;..\HARDWARE\Key</IncludePath>
+              <IncludePath>..\SYSTEM;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\LED;..\HARDWARE\OLED;..\HARDWARE\Buzzer;..\HARDWARE\BH1750;..\HARDWARE\Key;..\HARDWARE\DHT11;..\SYSTEM\EXTI;..\SYSTEM\TIMER;..\NET\device;..\NET\MQTT;..\NET\onenet</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -464,6 +464,26 @@
               <FileName>exti.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\SYSTEM\EXTI\exti.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>NET</GroupName>
+          <Files>
+            <File>
+              <FileName>esp8266.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\NET\device\esp8266.c</FilePath>
+            </File>
+            <File>
+              <FileName>MqttKit.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\NET\MQTT\MqttKit.c</FilePath>
+            </File>
+            <File>
+              <FileName>onenet.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\NET\onenet\onenet.c</FilePath>
             </File>
           </Files>
         </Group>
