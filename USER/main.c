@@ -12,6 +12,7 @@
 #include "key.h"
 
 #include "esp8266.h"
+#include "onenet.h"
 
 extern u8 alarmFlag = 0; //是否报警的标志
 extern u8 alarm_is_free = 10; //报警是否被手动操作
@@ -19,45 +20,78 @@ extern u8 alarm_is_free = 10; //报警是否被手动操作
 u8 humiH, humiL, tempH, tempL;
 float light;
 
+char PUB_BUF[256]; //上传数据buf
+const char *topics[] = {"/smarthome_yk/sub"};
+const char devPubtopic[] = "/smarthome_yk/pub";
+
 void Hardware_Init(void);
 void OLED_ShowFixed(void);
 
 int main(void)
 {	
+	unsigned short timeCount = 0;	//发送间隔变量
+	unsigned char *dataPtr = NULL;
+	
 	Hardware_Init();
 	OLED_ShowFixed();
 	
+	ESP8266_Init();
+	while(OneNet_DevLink())			//接入OneNET
+		delay_ms(500);
+	
+	//提示接入成功
+	Buzzer_ON();
+	delay_ms(200);
+	Buzzer_OFF();
+	
+	OneNet_Subscribe(topics, 1);
+	
 	while(1) 
 	{	
-		//获取温湿度
-		DHT11_Read_Data(&humiH, &humiL, &tempH, &tempL);
-		//获取光强
-		if (!i2c_CheckDevice(BH1750_Addr))
-		{
-			light = LIght_Intensity();
-		}
-		
-		//判断是否报警
-		if(alarm_is_free >= 10) //如果报警器空闲，则运行自动控制 初始值为10
-		{
+		if(timeCount % 40 == 0){  //1000ms / 25 = 40
+			//获取温湿度
+			DHT11_Read_Data(&humiH, &humiL, &tempH, &tempL);
+			//获取光强
+			if (!i2c_CheckDevice(BH1750_Addr))
+			{
+				light = LIght_Intensity();
+			}
+			//判断是否报警
+			if(alarm_is_free >= 10) //如果报警器空闲，则运行自动控制 初始值为10
+			{
 
-			if(light > 3000 || humiH > 80 || tempH > 32)
-				alarmFlag = 1;
-			else
-				alarmFlag = 0;
+				if(light > 3000 || humiH > 80 || tempH > 32)
+					alarmFlag = 1;
+				else
+					alarmFlag = 0;
+			}
+			if(alarm_is_free < 10) alarm_is_free++;
+			//printf("alarm_is_free:%d, alarmFlag:%d\r\n",alarm_is_free,alarmFlag);
+			//UsartPrintf(USART_DEBUG, "alarm_is_free:%d, alarmFlag:%d\r\n",alarm_is_free,alarmFlag);
+			printf("当前温度:%d.%d  湿度:%d.%d\r\n",tempH,tempL,humiH,humiL);
+			printf("当前光照强度:%.2f lx\r\n",light);
+			//屏幕显示
+			OLED_ShowNum(2,6,humiH,2);
+			OLED_ShowNum(2,9,humiL,2);
+			OLED_ShowNum(3,6,tempH,2);
+			OLED_ShowNum(3,9,tempL,2);
+			OLED_ShowNum(4,7,light,5);
 		}
-		if(alarm_is_free < 10) alarm_is_free++;
-		printf("alarm_is_free:%d, alarmFlag:%d\r\n",alarm_is_free,alarmFlag);
-		UsartPrintf(USART_DEBUG, "alarm_is_free:%d, alarmFlag:%d\r\n",alarm_is_free,alarmFlag);
-		//屏幕显示
-		OLED_ShowNum(2,6,humiH,2);
-		OLED_ShowNum(2,9,humiL,2);
-		OLED_ShowNum(3,6,tempH,2);
-		OLED_ShowNum(3,9,tempL,2);
 		
-		OLED_ShowNum(4,7,light,5);
+		if(++timeCount >= 200)	//发送间隔5s  5000ms / 25 = 200
+		{
+			UsartPrintf(USART_DEBUG, "OneNet_Publish\r\n");
+			sprintf(PUB_BUF,"{\"Temp\":%d.%d, \"Hum\":%d.%d, \"Light\":%.2f}",tempH,tempL,humiH,humiL,light);
+			OneNet_Publish(devPubtopic, PUB_BUF);
+			timeCount = 0;
+			ESP8266_Clear();
+		}
 		
-		delay_ms(1000);
+		dataPtr = ESP8266_GetIPD(3);
+		if(dataPtr != NULL)
+			OneNet_RevPro(dataPtr);
+		
+		delay_ms(10);
 	}
  }
 

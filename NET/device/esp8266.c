@@ -33,9 +33,9 @@
 #include <stdio.h>
 
 
-#define ESP8266_WIFI_INFO		"AT+CWJAP=\"ONENET\",\"IOT@Chinamobile123\"\r\n"
+#define ESP8266_WIFI_INFO		"AT+CWJAP=\"Rodney-K\",\"12345678\"\r\n"
 
-#define ESP8266_ONENET_INFO		"AT+CIPSTART=\"TCP\",\"183.230.40.39\",6002\r\n"
+#define ESP8266_ONENET_INFO		"AT+CIPSTART=\"TCP\",\"broker.emqx.io\",1883\r\n"
 
 
 unsigned char esp8266_buf[128];
@@ -199,7 +199,8 @@ unsigned char *ESP8266_GetIPD(unsigned short timeOut)
 		
 		//DelayXms(5);													//延时等待
 		delay_ms(5);
-	} while(timeOut--);
+		timeOut--;
+	} while(timeOut > 0);
 	
 	return NULL;														//超时还未找到，返回空指针
 
@@ -238,10 +239,16 @@ void ESP8266_Init(void)
 	
 	ESP8266_Clear();
 	
-	UsartPrintf(USART_DEBUG, "1. AT\r\n");
+	UsartPrintf(USART_DEBUG, "0. AT\r\n");
 	while(ESP8266_SendCmd("AT\r\n", "OK"))
 		//DelayXms(500);
 		delay_ms(500);
+	
+	UsartPrintf(USART_DEBUG, "1. RST\r\n");
+	ESP8266_SendCmd("AT+RST\r\n", "");
+	delay_ms(500);
+	ESP8266_SendCmd("AT+CIPCLOSE\r\n", "");
+	delay_ms(500);
 	
 	UsartPrintf(USART_DEBUG, "2. CWMODE\r\n");
 	while(ESP8266_SendCmd("AT+CWMODE=1\r\n", "OK"))
