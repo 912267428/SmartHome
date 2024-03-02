@@ -4,8 +4,8 @@
 #include "delay.h"
 #include "usart.h"
 
- extern u8 alarmFlag;
- extern u8 alarm_is_free;
+extern u8 alarmFlag;
+extern u8 alarm_is_free;
  
 //外部中断初始化函数
 void EXTIX_Init(void)

@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F10X_MD,USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\SYSTEM;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\LED;..\HARDWARE\OLED;..\HARDWARE\Buzzer;..\HARDWARE\BH1750;..\HARDWARE\Key;..\HARDWARE\DHT11;..\SYSTEM\EXTI;..\SYSTEM\TIMER;..\NET\device;..\NET\MQTT;..\NET\onenet</IncludePath>
+              <IncludePath>..\SYSTEM;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\USER;..\STM32F10x_FWLib\inc;..\CORE;..\HARDWARE\LED;..\HARDWARE\OLED;..\HARDWARE\Buzzer;..\HARDWARE\BH1750;..\HARDWARE\Key;..\HARDWARE\DHT11;..\SYSTEM\EXTI;..\SYSTEM\TIMER;..\NET\device;..\NET\MQTT;..\NET\onenet;..\NET\cJSON</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -484,6 +484,11 @@
               <FileName>onenet.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\NET\onenet\onenet.c</FilePath>
+            </File>
+            <File>
+              <FileName>cJSON.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\NET\cJSON\cJSON.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -32,10 +32,12 @@
 //硬件驱动
 #include "usart.h"
 #include "delay.h"
+#include "led.h"
 
 //C库
 #include <string.h>
 #include <stdio.h>
+#include "cJSON.h"
 
 
 #define PROID		"77247"
@@ -46,7 +48,8 @@
 
 
 extern unsigned char esp8266_buf[128];
-
+extern u8 alarmFlag;
+extern u8 alarm_is_free;
 
 //==========================================================
 //	函数名称：	OneNet_DevLink
@@ -196,23 +199,33 @@ void OneNet_RevPro(unsigned char *cmd)
 	char numBuf[10];
 	int num = 0;
 	
+	cJSON *json, *json_value;
 	type = MQTT_UnPacketRecv(cmd);
 	switch(type)
 	{
-		case MQTT_PKT_CMD:															//命令下发
+		case MQTT_PKT_CMD:	//如果是命令														//命令下发
 			
 			result = MQTT_UnPacketCmd(cmd, &cmdid_topic, &req_payload, &req_len);	//解出topic和消息体
 			if(result == 0)
 			{
 				UsartPrintf(USART_DEBUG, "cmdid: %s, req: %s, req_len: %d\r\n", cmdid_topic, req_payload, req_len);
 				
-				if(MQTT_PacketCmdResp(cmdid_topic, req_payload, &mqttPacket) == 0)	//命令回复组包
-				{
-					UsartPrintf(USART_DEBUG, "Tips:	Send CmdResp\r\n");
-					
-					ESP8266_SendData(mqttPacket._data, mqttPacket._len);			//回复命令
-					MQTT_DeleteBuffer(&mqttPacket);									//删包
+				//对数据包进行json数据格式解析
+				json = cJSON_Parse(req_payload);
+				if(!json)UsartPrintf(USART_DEBUG,"Error before: [%s]\r\n",cJSON_GetErrorPtr());
+				else{//解析成功
+					//解析开关值
+					json_value = cJSON_GetObjectItem(json, "LED_SW");
+					if(json_value->valueint) //json_value >0 且为int
+					{
+						LED0 = 0; //打开LED0
+						
+					}else{
+						LED0 = 1; //关闭LED0
+					}
 				}
+				cJSON_Delete(json);
+				MQTT_DeleteBuffer(&mqttPacket);									//删包
 			}
 		
 		break;
@@ -224,34 +237,41 @@ void OneNet_RevPro(unsigned char *cmd)
 			{
 				UsartPrintf(USART_DEBUG, "topic: %s, topic_len: %d, payload: %s, payload_len: %d\r\n",
 																	cmdid_topic, topic_len, req_payload, req_len);
-				
-				switch(qos)
-				{
-					case 1:															//收到publish的qos为1，设备需要回复Ack
-					
-						if(MQTT_PacketPublishAck(pkt_id, &mqttPacket) == 0)
+				//对数据包进行json数据格式解析
+				json = cJSON_Parse(req_payload);
+				if(!json)UsartPrintf(USART_DEBUG,"Error before: [%s]\r\n",cJSON_GetErrorPtr());
+				else{//解析成功
+					//解析开关值
+					json_value = cJSON_GetObjectItem(json, "target");
+					printf("json_key: [%s]\r\n",json_value->string);
+					printf("json_value: [%s]\r\n",json_value->valuestring);
+					if(strstr(json_value->valuestring,"LED") != NULL)
+					{
+						json_value = cJSON_GetObjectItem(json, "value");
+						if(json_value->valueint) LED0 = 0;
+						else LED0 = 1;
+					}else{
+						json_value = cJSON_GetObjectItem(json, "value");
+						if(json_value->valueint)
 						{
-							UsartPrintf(USART_DEBUG, "Tips:	Send PublishAck\r\n");
-							ESP8266_SendData(mqttPacket._data, mqttPacket._len);
-							MQTT_DeleteBuffer(&mqttPacket);
+							alarmFlag = 1;
+							alarm_is_free = 0;
 						}
-					
-					break;
-					
-					case 2:															//收到publish的qos为2，设备先回复Rec
-																					//平台回复Rel，设备再回复Comp
-						if(MQTT_PacketPublishRec(pkt_id, &mqttPacket) == 0)
-						{
-							UsartPrintf(USART_DEBUG, "Tips:	Send PublishRec\r\n");
-							ESP8266_SendData(mqttPacket._data, mqttPacket._len);
-							MQTT_DeleteBuffer(&mqttPacket);
+						else{
+							alarmFlag = 0;
+							alarm_is_free = 0;
 						}
-					
-					break;
-					
-					default:
-						break;
+					}
+//					if(json_value->valueint) //json_value >0 且为int
+//					{
+//						LED0 = 0; //打开LED0
+//						
+//					}else{
+//						LED0 = 1; //关闭LED0
+//					}
 				}
+				cJSON_Delete(json);
+				MQTT_DeleteBuffer(&mqttPacket);									//删包
 			}
 		
 		break;

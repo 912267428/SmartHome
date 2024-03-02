@@ -14,8 +14,10 @@
 #include "esp8266.h"
 #include "onenet.h"
 
+
 extern u8 alarmFlag = 0; //是否报警的标志
 extern u8 alarm_is_free = 10; //报警是否被手动操作
+u8 LED_Status = 0;
 
 u8 humiH, humiL, tempH, tempL;
 float light;
@@ -65,9 +67,11 @@ int main(void)
 				else
 					alarmFlag = 0;
 			}
+			
 			if(alarm_is_free < 10) alarm_is_free++;
-			//printf("alarm_is_free:%d, alarmFlag:%d\r\n",alarm_is_free,alarmFlag);
+			printf("alarm_is_free:%d, alarmFlag:%d\r\n",alarm_is_free,alarmFlag);
 			//UsartPrintf(USART_DEBUG, "alarm_is_free:%d, alarmFlag:%d\r\n",alarm_is_free,alarmFlag);
+			
 			printf("当前温度:%d.%d  湿度:%d.%d\r\n",tempH,tempL,humiH,humiL);
 			printf("当前光照强度:%.2f lx\r\n",light);
 			//屏幕显示
@@ -80,8 +84,10 @@ int main(void)
 		
 		if(++timeCount >= 200)	//发送间隔5s  5000ms / 25 = 200
 		{
+			LED_Status = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_4);
 			UsartPrintf(USART_DEBUG, "OneNet_Publish\r\n");
-			sprintf(PUB_BUF,"{\"Temp\":%d.%d, \"Hum\":%d.%d, \"Light\":%.2f}",tempH,tempL,humiH,humiL,light);
+			sprintf(PUB_BUF,"{\"Temp\":%d.%d, \"Hum\":%d.%d, \"Light\":%.2f, \"LED\":%d, \"Buzzer\":%d}"
+			,tempH,tempL,humiH,humiL,light,LED_Status?0:1,alarmFlag);
 			OneNet_Publish(devPubtopic, PUB_BUF);
 			timeCount = 0;
 			ESP8266_Clear();
