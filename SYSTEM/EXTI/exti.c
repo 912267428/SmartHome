@@ -57,7 +57,7 @@ void EXTIX_Init(void)
 {			
 	delay_ms(10);   //消抖			 
 	if(KEY0==0)	{
-		//LED0=!LED0;
+		LED0=!LED0;
 		//LED1=!LED1;
 	}
  	 EXTI_ClearITPendingBit(EXTI_Line0);    //清除LINE5上的中断标志位  

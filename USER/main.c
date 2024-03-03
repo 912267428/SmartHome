@@ -35,11 +35,15 @@ int main(void)
 	unsigned char *dataPtr = NULL;
 	
 	Hardware_Init();
-	OLED_ShowFixed();
 	
+	OLED_ShowString(1,1,"Connecting WIFI");
 	ESP8266_Init();
+	OLED_ShowString(1,1,"Complete");
+	
 	while(OneNet_DevLink())			//接入OneNET
 		delay_ms(500);
+	
+	OLED_ShowFixed();
 	
 	//提示接入成功
 	Buzzer_ON();
@@ -122,10 +126,7 @@ void Hardware_Init(void)
 	TIM3_Int_Init(2499, 7199);
 	
 	OLED_ShowString(1,1,"Starting Up");
-	delay_ms(300);
 	printf("Hardware init OK\r\n");
-	OLED_ShowString(1,1,"Completed");
-	delay_ms(200);
 }
 
 void OLED_ShowFixed(void)
