@@ -35,7 +35,7 @@
 
 #define ESP8266_WIFI_INFO		"AT+CWJAP=\"Rodney-K\",\"12345678\"\r\n"
 
-#define ESP8266_ONENET_INFO		"AT+CIPSTART=\"TCP\",\"broker.emqx.io\",1883\r\n"
+#define ESP8266_ONENET_INFO		"AT+CIPSTART=\"TCP\",\"broker-cn.emqx.io\",1883\r\n"
 
 
 unsigned char esp8266_buf[128];
