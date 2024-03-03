@@ -1,0 +1,90 @@
+<!--index.wxml-->
+<view class="page-container">
+
+  <!-- 头部部分 -->
+  <view class="header-container">
+    <view class="header-air">
+      <view>
+        空气质量 - 良
+      </view>
+      <view>
+        洪山 - 武汉
+      </view>
+    </view>
+    <view class="header-title">
+      <view>
+        60
+      </view>
+      <view>
+        晴
+      </view>
+    </view>
+    <view class="header-ad">
+      今天天气很好
+    </view>
+  </view>
+
+  <!-- 数据部分 -->
+  <view class="data-container">
+    <!-- 温度 -->
+    <view class="data-card">
+      <image class="data-card_icon" src="/static/temp.png" />
+      <view class="data-card_text">
+        <view class="data-card_title">
+          温度
+        </view>
+        <view class="data-card_value">
+          {{ Temp }} ℃
+        </view>
+      </view>
+    </view>
+    <!-- 湿度 -->
+    <view class="data-card">
+      <image class="data-card_icon" src="/static/hum.png" />
+      <view class="data-card_text">
+        <view class="data-card_title">
+          湿度
+        </view>
+        <view class="data-card_value">
+          {{ Hum }} %
+        </view>
+      </view>
+    </view>
+    <!-- 光照 -->
+    <view class="data-card">
+      <image class="data-card_icon" src="/static/light.png" />
+      <view class="data-card_text">
+        <view class="data-card_title">
+          光照
+        </view>
+        <view class="data-card_value">
+          {{ Light | 0 }} Lx
+        </view>
+      </view>
+    </view>
+    <!-- LED -->
+    <view class="data-card">
+      <image class="data-card_icon" src="/static/led.png" />
+      <view class="data-card_text">
+        <view class="data-card_title">
+          客厅灯
+        </view>
+        <view class="data-card_value">
+          <switch checked="{{LED}}" bindchange="onLedchage" color="#3d7ef9" />
+        </view>
+      </view>
+    </view>
+    <!-- 报警器 -->
+    <view class="data-card">
+      <image class="data-card_icon" src="/static/alarm.png" />
+      <view class="data-card_text">
+        <view class="data-card_title">
+          报警器
+        </view>
+        <view class="data-card_value">
+          <switch checked="{{Buzzer}}" bindchange="onBuzzerchage" color="#3d7ef9" />
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
