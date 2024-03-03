@@ -31,7 +31,6 @@
 
 //Ó²¼þÇý¶¯
 #include "usart.h"
-#include "delay.h"
 #include "led.h"
 
 //C¿â

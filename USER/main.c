@@ -1,11 +1,15 @@
-#include "delay.h"
-#include "sys.h"
+#include "system.h"
+#include "SysTick.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
+#include "task.h"
+
 #include "usart.h"
 #include "timer.h"
 #include "exti.h"
 
-#include "led.h"
 #include "OLED.h"
+#include "led.h"
 #include "Buzzer.h"
 #include "DHT11.h"
 #include "Bh1750.h"
@@ -14,106 +18,249 @@
 #include "esp8266.h"
 #include "onenet.h"
 
+//ÈÎÎñÓÅÏÈ¼¶
+#define START_TASK_PRIO		1
+//ÈÎÎñ¶ÑÕ»´óÐ¡	
+#define START_STK_SIZE 		256  
+//ÈÎÎñ¾ä±ú
+TaskHandle_t StartTask_Handler;
+//ÈÎÎñº¯Êý
+void start_task(void *pvParameters);
 
-extern u8 alarmFlag = 0; //æ˜¯å¦æŠ¥è­¦çš„æ ‡å¿—
-extern u8 alarm_is_free = 10; //æŠ¥è­¦æ˜¯å¦è¢«æ‰‹åŠ¨æ“ä½œ
+//ÈÎÎñÓÅÏÈ¼¶
+#define INIT_TASK_PRIO		4
+//ÈÎÎñ¶ÑÕ»´óÐ¡	
+#define INIT_STK_SIZE 		256  
+//ÈÎÎñ¾ä±ú
+TaskHandle_t INITTask_Handler;
+//ÈÎÎñº¯Êý
+void init_task(void *pvParameters);
+
+//ÈÎÎñÓÅÏÈ¼¶
+#define Send_TASK_PRIO		2
+//ÈÎÎñ¶ÑÕ»´óÐ¡	
+#define Send_STK_SIZE 		256  
+//ÈÎÎñ¾ä±ú
+TaskHandle_t SendTask_Handler;
+//ÈÎÎñº¯Êý
+void send_task(void *pvParameters);
+
+//ÈÎÎñÓÅÏÈ¼¶
+#define Recieve_TASK_PRIO		2
+//ÈÎÎñ¶ÑÕ»´óÐ¡	
+#define Recieve_STK_SIZE 		256  
+//ÈÎÎñ¾ä±ú
+TaskHandle_t RecieveTask_Handler;
+//ÈÎÎñº¯Êý
+void recieve_task(void *pvParameters);
+
+//ÈÎÎñÓÅÏÈ¼¶
+#define Read_TASK_PRIO	1
+//ÈÎÎñ¶ÑÕ»´óÐ¡	
+#define Read_STK_SIZE 		256  
+//ÈÎÎñ¾ä±ú
+TaskHandle_t Read_Task_Handler;
+//ÈÎÎñº¯Êý
+void read_task(void *pvParameters);
+
+extern u8 alarmFlag = 0; //ÊÇ·ñ±¨¾¯µÄ±êÖ¾
+extern u8 alarm_is_free = 20; //±¨¾¯ÊÇ·ñ±»ÊÖ¶¯²Ù×÷
 u8 LED_Status = 0;
 
 u8 humiH, humiL, tempH, tempL;
 float light;
 
-char PUB_BUF[256]; //ä¸Šä¼ æ•°æ®buf
+char PUB_BUF[256]; //ÉÏ´«Êý¾Ýbuf
 const char *topics[] = {"/smarthome_yk/sub"};
 const char devPubtopic[] = "/smarthome_yk/pub";
 
 void Hardware_Init(void);
 void OLED_ShowFixed(void);
 
-int main(void)
-{	
-	unsigned short timeCount = 0;	//å‘é€é—´éš”å˜é‡
+/*******************************************************************************
+* º¯ Êý Ãû         : main
+* º¯Êý¹¦ÄÜ		   : Ö÷º¯Êý
+* Êä    Èë         : ÎÞ
+* Êä    ³ö         : ÎÞ
+*******************************************************************************/
+int main()
+{
+	SysTick_Init(72);
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);//ÉèÖÃÏµÍ³ÖÐ¶ÏÓÅÏÈ¼¶·Ö×é4
+		
+	
+	//´´½¨¿ªÊ¼ÈÎÎñ
+    xTaskCreate((TaskFunction_t )start_task,            //ÈÎÎñº¯Êý
+                (const char*    )"start_task",          //ÈÎÎñÃû³Æ
+                (uint16_t       )START_STK_SIZE,        //ÈÎÎñ¶ÑÕ»´óÐ¡
+                (void*          )NULL,                  //´«µÝ¸øÈÎÎñº¯ÊýµÄ²ÎÊý
+                (UBaseType_t    )START_TASK_PRIO,       //ÈÎÎñÓÅÏÈ¼¶
+                (TaskHandle_t*  )&StartTask_Handler);   //ÈÎÎñ¾ä±ú              
+    vTaskStartScheduler();          //¿ªÆôÈÎÎñµ÷¶È
+}
+
+//¿ªÊ¼ÈÎÎñ ÈÎÎñº¯Êý
+void start_task(void *pvParameters)
+{
+    taskENTER_CRITICAL();           //½øÈëÁÙ½çÇø
+	
+    //´´½¨·¢ËÍÈÎÎñ
+    xTaskCreate((TaskFunction_t )send_task,     
+                (const char*    )"send_task",   
+                (uint16_t       )Send_STK_SIZE, 
+                (void*          )NULL,
+                (UBaseType_t    )Send_TASK_PRIO,
+                (TaskHandle_t*  )&SendTask_Handler);
+	
+	//´´½¨³õÊ¼»¯ÈÎÎñ
+    xTaskCreate((TaskFunction_t )init_task,     
+                (const char*    )"init_task",   
+                (uint16_t       )INIT_STK_SIZE, 
+                (void*          )NULL,
+                (UBaseType_t    )INIT_TASK_PRIO,
+                (TaskHandle_t*  )&INITTask_Handler);
+				
+				
+	//´´½¨½ÓÊÕ°´¼üÈÎÎñ
+    xTaskCreate((TaskFunction_t )recieve_task,     
+                (const char*    )"recieve_task",   
+                (uint16_t       )Recieve_STK_SIZE, 
+                (void*          )NULL,
+                (UBaseType_t    )Recieve_TASK_PRIO,
+                (TaskHandle_t*  )&RecieveTask_Handler);
+				
+	//´´½¨¶ÁÈ¡Êý¾ÝÈÎÎñ
+    xTaskCreate((TaskFunction_t )read_task,     
+                (const char*    )"read_task",   
+                (uint16_t       )Read_STK_SIZE, 
+                (void*          )NULL,
+                (UBaseType_t    )Read_TASK_PRIO,
+                (TaskHandle_t*  )&Read_Task_Handler); 
+					
+    vTaskDelete(StartTask_Handler); //É¾³ý¿ªÊ¼ÈÎÎñ	
+    taskEXIT_CRITICAL();            //ÍË³öÁÙ½çÇø
+				
+} 
+
+
+void send_task(void *pvParameters)
+{
+    while(1)
+    {
+		vTaskSuspend(RecieveTask_Handler);
+		vTaskSuspend(Read_Task_Handler);
+		
+		LED_Status = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_4);
+		UsartPrintf(USART_DEBUG, "OneNet_Publish\r\n");
+		sprintf(PUB_BUF,"{\"Temp\":%d.%d, \"Hum\":%d.%d, \"Light\":%.2f, \"LED\":%d, \"Buzzer\":%d}"
+							,tempH,tempL,humiH,humiL,light,LED_Status?0:1,alarmFlag);
+		OneNet_Publish(devPubtopic, PUB_BUF);
+
+		ESP8266_Clear();
+		
+		vTaskResume(RecieveTask_Handler);
+		vTaskResume(Read_Task_Handler);
+		vTaskDelay(1500);
+    }
+}
+
+void recieve_task(void *pvParameters)
+{
 	unsigned char *dataPtr = NULL;
 	
-	Hardware_Init();
-	
-	OLED_ShowString(1,1,"Connecting WIFI");
-	ESP8266_Init();
-	OLED_ShowString(1,1,"Complete");
-	
-	while(OneNet_DevLink())			//æŽ¥å…¥OneNET
-		delay_ms(500);
-	
-	OLED_ShowFixed();
-	
-	//æç¤ºæŽ¥å…¥æˆåŠŸ
-	Buzzer_ON();
-	delay_ms(200);
-	Buzzer_OFF();
-	
-	OneNet_Subscribe(topics, 1);
-	
-	while(1) 
-	{	
-		if(timeCount % 40 == 0){  //1000ms / 25 = 40
-			//èŽ·å–æ¸©æ¹¿åº¦
-			DHT11_Read_Data(&humiH, &humiL, &tempH, &tempL);
-			//èŽ·å–å…‰å¼º
-			if (!i2c_CheckDevice(BH1750_Addr))
-			{
-				light = LIght_Intensity();
-			}
-			//åˆ¤æ–­æ˜¯å¦æŠ¥è­¦
-			if(alarm_is_free >= 10) //å¦‚æžœæŠ¥è­¦å™¨ç©ºé—²ï¼Œåˆ™è¿è¡Œè‡ªåŠ¨æŽ§åˆ¶ åˆå§‹å€¼ä¸º10
-			{
-
-				if(light > 3000 || humiH > 80 || tempH > 32)
-					alarmFlag = 1;
-				else
-					alarmFlag = 0;
-			}
-			
-			if(alarm_is_free < 10) alarm_is_free++;
-			printf("alarm_is_free:%d, alarmFlag:%d\r\n",alarm_is_free,alarmFlag);
-			//UsartPrintf(USART_DEBUG, "alarm_is_free:%d, alarmFlag:%d\r\n",alarm_is_free,alarmFlag);
-			
-			printf("å½“å‰æ¸©åº¦:%d.%d  æ¹¿åº¦:%d.%d\r\n",tempH,tempL,humiH,humiL);
-			printf("å½“å‰å…‰ç…§å¼ºåº¦:%.2f lx\r\n",light);
-			//å±å¹•æ˜¾ç¤º
-			OLED_ShowNum(2,6,humiH,2);
-			OLED_ShowNum(2,9,humiL,2);
-			OLED_ShowNum(3,6,tempH,2);
-			OLED_ShowNum(3,9,tempL,2);
-			OLED_ShowNum(4,7,light,5);
-		}
-		
-		if(++timeCount >= 200)	//å‘é€é—´éš”5s  5000ms / 25 = 200
-		{
-			LED_Status = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_4);
-			UsartPrintf(USART_DEBUG, "OneNet_Publish\r\n");
-			sprintf(PUB_BUF,"{\"Temp\":%d.%d, \"Hum\":%d.%d, \"Light\":%.2f, \"LED\":%d, \"Buzzer\":%d}"
-			,tempH,tempL,humiH,humiL,light,LED_Status?0:1,alarmFlag);
-			OneNet_Publish(devPubtopic, PUB_BUF);
-			timeCount = 0;
-			ESP8266_Clear();
-		}
+	while(1)
+	{
+		vTaskSuspend(SendTask_Handler);
+		vTaskSuspend(Read_Task_Handler);
 		
 		dataPtr = ESP8266_GetIPD(3);
 		if(dataPtr != NULL)
 			OneNet_RevPro(dataPtr);
 		
-		delay_ms(10);
+		vTaskResume(SendTask_Handler);
+		vTaskResume(Read_Task_Handler);
+		vTaskDelay(800);
 	}
- }
+}
+
+
+void read_task(void *pvParameters)
+{
+	
+	while(1)
+	{
+		vTaskSuspend(SendTask_Handler);
+		vTaskSuspend(RecieveTask_Handler);
+		
+		//»ñÈ¡ÎÂÊª¶È
+		DHT11_Read_Data(&humiH, &humiL, &tempH, &tempL);
+		//»ñÈ¡¹âÇ¿
+		if (!i2c_CheckDevice(BH1750_Addr))
+		{
+			light = LIght_Intensity();
+		}
+		//ÅÐ¶ÏÊÇ·ñ±¨¾¯
+		if(alarm_is_free >= 20) //Èç¹û±¨¾¯Æ÷¿ÕÏÐ£¬ÔòÔËÐÐ×Ô¶¯¿ØÖÆ ³õÊ¼ÖµÎª10
+		{
+
+			if(light > 3000 || humiH > 80 || tempH > 32)
+				alarmFlag = 1;
+			else
+				alarmFlag = 0;
+		}
+		if(alarm_is_free < 20) alarm_is_free++;
+		
+		OLED_ShowNum(2,6,humiH,2);
+		OLED_ShowNum(2,9,humiL,2);
+		OLED_ShowNum(3,6,tempH,2);
+		OLED_ShowNum(3,9,tempL,2);
+		OLED_ShowNum(4,7,light,5);
+		
+		vTaskResume(SendTask_Handler);
+		vTaskResume(RecieveTask_Handler);
+		vTaskDelay(1000);
+	}
+}
+
+void init_task(void *pvParameters)
+{
+	vTaskSuspend(SendTask_Handler);
+	vTaskSuspend(RecieveTask_Handler);
+	vTaskSuspend(Read_Task_Handler);
+	
+	Hardware_Init();
+	
+	OLED_ShowString(1,1,"Connecting WIFI");
+	ESP8266_Init();
+	
+	OneNet_DevLink();
+//	while(OneNet_DevLink())			//½ÓÈëOneNET
+//		delay_xms(500);
+	
+	OLED_Clear();
+	OLED_ShowString(1,1,"Complete");
+	printf("Á¬½Ómqtt·þÎñÆ÷³É¹¦\r\n");
+	OLED_ShowFixed();
+	
+	//ÌáÊ¾½ÓÈë³É¹¦
+	Buzzer_ON();
+	delay_xms(200);
+	Buzzer_OFF();
+	
+	OneNet_Subscribe(topics, 1);
+	
+	vTaskResume(SendTask_Handler);
+	vTaskResume(RecieveTask_Handler);
+	vTaskResume(Read_Task_Handler);
+	vTaskDelete(INITTask_Handler); //É¾³ýÈÎÎñ
+}
 
 void Hardware_Init(void)
 {
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-	delay_init();	    //å»¶æ—¶å‡½æ•°åˆå§‹åŒ–
+	Usart1_Init(115200);	//µ÷ÊÔ´®¿Ú
+	Usart2_Init(115200);	//stm32 to esp8266Í¨Ñ¶´®¿Ú
 	
-	Usart1_Init(115200);	//è°ƒè¯•ä¸²å£
-	Usart2_Init(115200);	//stm32 to esp8266é€šè®¯ä¸²å£
-	
-	LED_Init();		  	//åˆå§‹åŒ–ä¸ŽLEDè¿žæŽ¥çš„ç¡¬ä»¶æŽ¥å£
+	LED_Init();		  	//³õÊ¼»¯ÓëLEDÁ¬½ÓµÄÓ²¼þ½Ó¿Ú
 	Buzzer_Init();
 	KEY_Init();
 	OLED_Init();

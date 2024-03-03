@@ -25,7 +25,7 @@
 #include "esp8266.h"
 
 //硬件驱动
-#include "delay.h"
+#include "SysTick.h"
 #include "usart.h"
 
 //C库
@@ -124,7 +124,7 @@ _Bool ESP8266_SendCmd(char *cmd, char *res)
 		}
 		
 		//DelayXms(10);
-		delay_ms(10);
+		delay_xms(10);
 	}
 	
 	return 1;
@@ -198,7 +198,7 @@ unsigned char *ESP8266_GetIPD(unsigned short timeOut)
 		}
 		
 		//DelayXms(5);													//延时等待
-		delay_ms(5);
+		delay_xms(5);
 		timeOut--;
 	} while(timeOut > 0);
 	
@@ -232,43 +232,43 @@ void ESP8266_Init(void)
 	
 	GPIO_WriteBit(GPIOC, GPIO_Pin_14, Bit_RESET);
 	//DelayXms(250);
-	delay_ms(250);
+	delay_xms(250);
 	GPIO_WriteBit(GPIOC, GPIO_Pin_14, Bit_SET);
 	//DelayXms(500);
-	delay_ms(500);
+	delay_xms(500);
 	
 	ESP8266_Clear();
 	
 	UsartPrintf(USART_DEBUG, "0. AT\r\n");
 	while(ESP8266_SendCmd("AT\r\n", "OK"))
 		//DelayXms(500);
-		delay_ms(500);
+		delay_xms(500);
 	
 	UsartPrintf(USART_DEBUG, "1. RST\r\n");
 	ESP8266_SendCmd("AT+RST\r\n", "");
-	delay_ms(500);
+	delay_xms(500);
 	ESP8266_SendCmd("AT+CIPCLOSE\r\n", "");
-	delay_ms(500);
+	delay_xms(500);
 	
 	UsartPrintf(USART_DEBUG, "2. CWMODE\r\n");
 	while(ESP8266_SendCmd("AT+CWMODE=1\r\n", "OK"))
 		//DelayXms(500);
-		delay_ms(500);
+		delay_xms(500);
 	
 	UsartPrintf(USART_DEBUG, "3. AT+CWDHCP\r\n");
 	while(ESP8266_SendCmd("AT+CWDHCP=1,1\r\n", "OK"))
 		//DelayXms(500);
-		delay_ms(500);
+		delay_xms(500);
 	
 	UsartPrintf(USART_DEBUG, "4. CWJAP\r\n");
 	while(ESP8266_SendCmd(ESP8266_WIFI_INFO, "GOT IP"))
 		//DelayXms(500);
-		delay_ms(500);
+		delay_xms(500);
 	
 	UsartPrintf(USART_DEBUG, "5. CIPSTART\r\n");
 	while(ESP8266_SendCmd(ESP8266_ONENET_INFO, "CONNECT"))
 		//DelayXms(500);
-		delay_ms(500);
+		delay_xms(500);
 	
 	UsartPrintf(USART_DEBUG, "6. ESP8266 Init OK\r\n");
 
