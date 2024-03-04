@@ -14,23 +14,23 @@
 
 ### 原理图
 
-![接线图_原理图](.\Image\接线图_原理图.jpg)
+![接线图_原理图](./Image/接线图_原理图.jpg)
 
 ### 实际接线图
 
 采用面包板接线，肯定没有采用PCB板稳定。这样导致在运行中可能出现问题，例如：ESP8266-01S可能因为接线不稳定导致运行错误。
 
-![接线图_实际接线图](.\Image\接线图_实际接线图.jpg)
+![接线图_实际接线图](./Image/接线图_实际接线图.jpg)
 
 ## 小程序
 
-![mp_UI](.\Image\mp_UI.jpg)
+![mp_UI](./Image/mp_UI.jpg)
 
 ## 演示视频
 
 path: ./image/演示视频.mp4
 
-<video src=".\Image\演示视频.mp4"></video>
+<video src="./Image/演示视频.mp4"></video>
 
 ## 移植到FreeRTOS
 
