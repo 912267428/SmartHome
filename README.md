@@ -22,6 +22,18 @@
 
 ![接线图_实际接线图](./Image/接线图_实际接线图.jpg)
 
+## PCB设计导出文件：
+
+路径：.\PCB
+
+![PCB](./PCB/PCB.png)
+
+成品：
+
+<img src="./PCB/pcb_n.jpg" alt="pcb_n" style="zoom:30%;" />
+
+<img src="./PCB/pcb_h.jpg" alt="pcb_h" style="zoom:30%;" />
+
 ## 小程序
 
 ![mp_UI](./Image/mp_UI.jpg)
